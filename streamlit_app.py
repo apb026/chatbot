@@ -8,7 +8,7 @@ st.set_page_config(page_title="Healthcare Assistant", page_icon="🏥")
 # Title and Description
 st.title("🏥 Healthcare Assistant Chatbot")
 st.write(
-    "This chatbot provides healthcare-related information and can generate medical images using Google's Gemini API."
+    "This chatbot provides healthcare-related information."
 )
 
 # Gemini API Key Input
@@ -44,6 +44,11 @@ else:
             return "I'm sorry to hear you're not feeling well. Can you describe your symptoms in more detail? For example, are you feeling dizzy, nauseous, or experiencing pain?"
         return None
 
+    # Function to check if the query is related to healthcare
+    def is_healthcare_query(user_input):
+        health_keywords = ["health", "symptom", "treatment", "disease", "medicine", "pain", "diagnosis", "doctor", "doctor's advice", "sick"]
+        return any(keyword in user_input.lower() for keyword in health_keywords)
+
     # Create a chat input field to allow the user to enter a message.
     user_input = st.chat_input("Ask a healthcare question...")
 
@@ -66,8 +71,8 @@ else:
                 with st.chat_message("assistant"):
                     st.markdown(general_health_response)
                 st.session_state.messages.append({"role": "assistant", "content": general_health_response})
-            else:
-                # Handle other general queries (non-health-related)
+            elif is_healthcare_query(user_input):
+                # Handle other general healthcare queries
                 # Few-shot Examples for Better Responses
                 few_shot_examples = [
                     {"role": "user", "content": "What are the symptoms of diabetes?"},
@@ -104,31 +109,8 @@ else:
                         st.error("Unexpected response structure from Gemini API.")
                 else:
                     st.error(f"Error with Gemini API: {response.status_code} - {response.text}")
-
-        # Check if the input is related to image generation
-        def is_image_query(user_input):
-            return any(keyword in user_input.lower() for keyword in ["image", "show me", "diagram", "picture"])
-
-        # Text-to-Image Generation Based on Query
-        if is_image_query(user_input):
-            st.write("Generating relevant medical image...")
-            try:
-                image_payload = {
-                    "contents": [{"parts": [{"text": f"Generate an image of {user_input}"}]}]
-                }
-                image_response = requests.post(
-                    GEMINI_API_URL,
-                    headers={"Content-Type": "application/json"},
-                    data=json.dumps(image_payload),
-                )
-                if image_response.status_code == 200:
-                    image_data = image_response.json()
-                    if "candidates" in image_data:
-                        image_url = image_data["candidates"][0]["content"]["parts"][0]["text"]
-                        st.image(image_url, caption="Generated Medical Image")
-                    else:
-                        st.error("No image URL found in response.")
-                else:
-                    st.error(f"Image generation failed: {image_response.status_code}")
-            except Exception as e:
-                st.error(f"Image generation failed: {e}")
+            else:
+                # Handle non-healthcare queries
+                with st.chat_message("assistant"):
+                    st.markdown("Not my domain. I'm here to assist with healthcare-related questions!")
+                st.session_state.messages.append({"role": "assistant", "content": "Not my domain. I'm here to assist with healthcare-related questions!"})
