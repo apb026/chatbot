@@ -21,11 +21,9 @@ else:
     # Gemini API Endpoint
     GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
 
-    # Session State for Chat History and Symptoms
+    # Session State for Chat History
     if "messages" not in st.session_state:
         st.session_state.messages = []
-    if "user_symptoms" not in st.session_state:
-        st.session_state.user_symptoms = {}
 
     # Display the previous chat messages via `st.chat_message`
     for message in st.session_state.messages:
@@ -80,30 +78,6 @@ else:
         
         return None  # Input is valid
 
-    # Function to parse and store detailed symptoms
-    def process_symptoms(user_input):
-        if "headache" in user_input.lower():
-            details = {}
-            if "past" in user_input and "days" in user_input:
-                days_match = re.search(r"(\d+)\s*days", user_input)
-                if days_match:
-                    details['duration'] = days_match.group(1)
-            if "dull" in user_input:
-                details['type'] = "dull"
-            if "vomiting" in user_input:
-                details['symptoms'] = "vomiting"
-            return details
-        elif "upset stomach" in user_input.lower():
-            details = {}
-            if "pain" in user_input:
-                details['pain'] = "pain"
-            if "sharp" in user_input:
-                details['pain_type'] = "sharp"
-            if "cramping" in user_input:
-                details['pain_type'] = "cramping"
-            return details
-        return {}
-
     # Create a chat input field to allow the user to enter a message
     user_input = st.chat_input("Ask a healthcare question...")
 
@@ -127,38 +101,19 @@ else:
                     st.markdown(short_response)
                 st.session_state.messages.append({"role": "assistant", "content": short_response})
             else:
-                # Check if user has provided symptoms, and process it
-                symptoms_details = process_symptoms(user_input)
-                if symptoms_details:
-                    st.session_state.user_symptoms.update(symptoms_details)
-                    response = "Thank you for sharing. Based on what you’ve mentioned, here’s what I understand:\n"
-                    if 'duration' in symptoms_details:
-                        response += f"- Headache duration: {symptoms_details['duration']} days\n"
-                    if 'type' in symptoms_details:
-                        response += f"- Headache type: {symptoms_details['type']}\n"
-                    if 'symptoms' in symptoms_details:
-                        response += f"- Other symptoms: {symptoms_details['symptoms']}\n"
-                    if 'pain' in symptoms_details:
-                        response += f"- Pain type: {symptoms_details.get('pain_type', 'unspecified')}\n"
-                    response += "I’ll ask a few more questions to understand better:\n"
-                    response += "- Have you experienced any sensitivity to light or sound?\n"
-                    response += "- Are you feeling dehydrated or have you had a fever?\n"
-                    response += "- Is there any pain in your neck or shoulders?"
+                # Handle specific health-related queries (cough, headache, upset stomach)
+                specific_health_response = handle_specific_health_query(user_input)
+                if specific_health_response:
+                    with st.chat_message("assistant"):
+                        st.markdown(specific_health_response)
+                    st.session_state.messages.append({"role": "assistant", "content": specific_health_response})
+                else:
+                    # Only send request to the Gemini API if user explicitly mentions conditions like diabetes
+                    if "diabetes" in user_input.lower() or "cholesterol" in user_input.lower():
+                        response_text = "I can help you with information about diabetes or cholesterol. Could you provide more details about your symptoms?"
+                    else:
+                        response_text = "Can you tell me more about your symptoms? I'll ask more specific questions to help you better."
 
                     with st.chat_message("assistant"):
-                        st.markdown(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-                else:
-                    # Handle specific health-related queries
-                    specific_health_response = handle_specific_health_query(user_input)
-                    if specific_health_response:
-                        with st.chat_message("assistant"):
-                            st.markdown(specific_health_response)
-                        st.session_state.messages.append({"role": "assistant", "content": specific_health_response})
-                    else:
-                        # Default response if no specific condition found
-                        response_text = "Can you tell me about your symptoms? I'll ask more specific questions to help you better."
-
-                        with st.chat_message("assistant"):
-                            st.markdown(response_text)
-                        st.session_state.messages.append({"role": "assistant", "content": response_text})
+                        st.markdown(response_text)
+                    st.session_state.messages.append({"role": "assistant", "content": response_text})

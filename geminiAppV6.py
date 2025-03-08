@@ -47,9 +47,15 @@ else:
             return "I'm sorry to hear you're not feeling well. Can you describe your symptoms in more detail?"
         return None
 
-    # Function to handle specific health-related queries like cough, headache, upset stomach
+    # Function to handle specific health-related queries like insomnia, cough, headache, upset stomach
     def handle_specific_health_query(user_input):
-        if "cough" in user_input.lower():
+        if "insomniac" in user_input.lower() or "insomnia" in user_input.lower():
+            return ("It seems like you're dealing with insomnia. Could you tell me more about your sleep patterns?\n"
+                    "- Do you have trouble falling asleep, staying asleep, or waking up too early?\n"
+                    "- How many hours of sleep are you getting on average per night?\n"
+                    "- Are you experiencing any stress, anxiety, or other factors that might be affecting your sleep?\n"
+                    "This information will help me understand your condition better.")
+        elif "cough" in user_input.lower():
             return ("I understand you're experiencing a cough. Could you please provide more details?\n"
                     "- How long have you had the cough?\n"
                     "- Is it dry or with mucus?\n"
