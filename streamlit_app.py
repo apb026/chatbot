@@ -6,9 +6,9 @@ import json
 st.set_page_config(page_title="Healthcare Assistant", page_icon="🏥")
 
 # Title and Description
-st.title("🏥 Healthcare Assistant Chatbot")
+st.title("Healthcare Assistant Chatbot")
 st.write(
-    "This chatbot provides healthcare-related information and can generate medical images using Google's Gemini API."
+    "This chatbot provides healthcare-related information."
 )
 
 # Gemini API Key Input
@@ -117,31 +117,3 @@ else:
                 with st.chat_message("assistant"):
                     st.markdown(non_health_response)
                 st.session_state.messages.append({"role": "assistant", "content": non_health_response})
-
-        # Check if the input is related to image generation
-        def is_image_query(user_input):
-            return any(keyword in user_input.lower() for keyword in ["image", "show me", "diagram", "picture"])
-
-        # Text-to-Image Generation Based on Query
-        if is_image_query(user_input):
-            st.write("Generating relevant medical image...")
-            try:
-                image_payload = {
-                    "contents": [{"parts": [{"text": f"Generate an image of {user_input}"}]}]
-                }
-                image_response = requests.post(
-                    GEMINI_API_URL,
-                    headers={"Content-Type": "application/json"},
-                    data=json.dumps(image_payload),
-                )
-                if image_response.status_code == 200:
-                    image_data = image_response.json()
-                    if "candidates" in image_data:
-                        image_url = image_data["candidates"][0]["content"]["parts"][0]["text"]
-                        st.image(image_url, caption="Generated Medical Image")
-                    else:
-                        st.error("No image URL found in response.")
-                else:
-                    st.error(f"Image generation failed: {image_response.status_code}")
-            except Exception as e:
-                st.error(f"Image generation failed: {e}")
