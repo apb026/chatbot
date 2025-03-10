@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import PyPDF2
 import json
 import string
 
@@ -31,13 +32,17 @@ else:
             st.markdown(message["content"])
 
     # Function to extract text from a PDF file
-    import pdfplumber
-
     def extract_text_from_pdf(pdf_path):
-        with pdfplumber.open(pdf_path) as pdf:
+        # Open the PDF file in read-binary mode
+        with open(pdf_path, 'rb') as pdf_file:
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
             text = ""
-            for page in pdf.pages:
+        
+        # Iterate over each page in the PDF
+            for page_num in range(len(pdf_reader.pages)):
+                page = pdf_reader.pages[page_num]
                 text += page.extract_text()
+    
         return text
 
 
