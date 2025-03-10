@@ -32,12 +32,15 @@ else:
             st.markdown(message["content"])
 
     # Function to extract text from a PDF file
+    import pdfplumber
+
     def extract_text_from_pdf(pdf_path):
-        doc = fitz.open(pdf_path)
-        text = ""
-        for page in doc:
-            text += page.get_text("text")  # Extract text from each page
+        with pdfplumber.open(pdf_path) as pdf:
+            text = ""
+            for page in pdf.pages:
+                text += page.extract_text()
         return text
+
 
     # Function to extract keywords from the PDF
     def extract_keywords_from_text(text):
