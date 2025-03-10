@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import json
-import fitz  # PyMuPDF
+import fitz
 import string
 
 # Streamlit Page Configuration
