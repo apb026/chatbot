@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import json
+import fitz  # PyMuPDF
+import string
 
 # Streamlit Page Configuration
 st.set_page_config(page_title="Healthcare Assistant", page_icon="🏥")
@@ -29,6 +31,35 @@ else:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
+    # Function to extract text from a PDF file
+    def extract_text_from_pdf(pdf_path):
+        doc = fitz.open(pdf_path)
+        text = ""
+        for page in doc:
+            text += page.get_text("text")  # Extract text from each page
+        return text
+
+    # Function to extract keywords from the PDF
+    def extract_keywords_from_text(text):
+        # Clean the text and split it into words
+        text = text.translate(str.maketrans("", "", string.punctuation))  # Remove punctuation
+        words = set(text.lower().split())  # Convert all words to lowercase and remove duplicates
+        
+        # Optional: Add more sophisticated filtering here if needed, such as:
+        # - Removing common stop words.
+        # - Filtering words that match a medical dictionary.
+
+        return words
+
+    # Function to check if the query is health-related using the keywords from the PDF
+    def is_health_related(user_input, health_keywords):
+        return any(keyword in user_input.lower() for keyword in health_keywords)
+
+    # Path to the PDF that contains medical-related terms
+    pdf_path = "mgh.pdf"
+    pdf_text = extract_text_from_pdf(pdf_path)
+    health_keywords = extract_keywords_from_text(pdf_text)
+
     # Function for short responses to greetings
     def get_short_response(user_input):
         basic_responses = {
@@ -43,11 +74,6 @@ else:
         if "not feeling good" in user_input.lower():
             return "I'm sorry to hear you're not feeling well. Can you describe your symptoms in more detail? For example, are you feeling dizzy, nauseous, or experiencing pain?"
         return None
-
-    # Function to check if the query is health-related
-    def is_health_related(user_input):
-        health_keywords = ["health", "doctor", "medicine", "treatment", "symptom", "fever", "cough", "headache", "pain", "disease", "illness", "clinic"]
-        return any(keyword in user_input.lower() for keyword in health_keywords)
 
     # Create a chat input field to allow the user to enter a message.
     user_input = st.chat_input("Ask a healthcare question...")
@@ -66,7 +92,7 @@ else:
             st.session_state.messages.append({"role": "assistant", "content": short_response})
         else:
             # Check if the query is health-related
-            if is_health_related(user_input):
+            if is_health_related(user_input, health_keywords):
                 # Handle general health-related queries
                 general_health_response = handle_general_health_query(user_input)
                 if general_health_response:
